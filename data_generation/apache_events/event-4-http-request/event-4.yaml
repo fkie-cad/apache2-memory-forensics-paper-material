@@ -1,0 +1,33 @@
+include: "../base-image.yaml"
+
+
+event-receive-http-request:
+  container:
+    ports:
+      '8081/tcp': 8080
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+    - upload:
+        "apache_events/event-4-http-request/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "apache_events/event-4-http-request/apache2.conf": "/etc/apache2/apache2.conf"
+        "apache_events/event-4-http-request/example.com.conf": "/etc/apache2/sites-available/example.com.conf"
+        "apache_events/event-4-http-request/ports.conf": "/etc/apache2/ports.conf"
+    - execute:
+        - "a2ensite example.com"
+        - "a2dissite 000-default"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - start
+    - request:
+        url: "http://localhost:8080/images/"
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+    - execute:
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/traffic.pcap": "apache_events/event-4-http-request/download/traffic.pcap"
+        "/tmp/memory_dumps/": "apache_events/event-4-http-request/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-4-http-request/download/logs/"
+        "/etc/apache2/": "apache_events/event-4-http-request/download/apache2/"

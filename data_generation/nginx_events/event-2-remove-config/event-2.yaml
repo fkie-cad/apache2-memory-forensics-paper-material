@@ -1,0 +1,14 @@
+include: "../base-image.yaml"
+
+
+event-remove-configuration-of-running-web-server:
+  actions:
+    - upload:
+        "nginx_events/event-2-remove-config/nginx.conf": "/etc/nginx/nginx.conf"
+    - start
+    - execute:
+        - "rm -f /etc/nginx/nginx.conf"
+        - "./dump_memory.sh nginx /tmp/memory_dumps/"
+    - download:
+        "/tmp/memory_dumps/": "nginx_events/event-2-remove-config/download/dumps/"
+        "/var/log/nginx/": "nginx_events/event-2-remove-config/download/logs/"

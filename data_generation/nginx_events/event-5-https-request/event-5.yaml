@@ -1,0 +1,32 @@
+include: "../base-image.yaml"
+
+
+event-receive-https-request:
+  container:
+    ports:
+      '443/tcp': 4444
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+        - "./gen_cert.sh"
+    - upload:
+        "nginx_events/event-5-https-request/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "nginx_events/event-5-https-request/nginx.conf": "/etc/nginx/nginx.conf"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - start
+    - request:
+        url: "https://localhost:4444/images/"
+        verify: False
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+    - execute:
+        - "./dump_memory.sh nginx /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/memory_dumps/": "nginx_events/event-5-https-request/download/dumps/"
+        "/var/log/nginx/": "nginx_events/event-5-https-request/download/logs/"
+        "/etc/nginx/nginx.conf": "nginx_events/event-5-https-request/download/nginx.conf"
+        "/tmp/traffic.pcap": "nginx_events/event-5-https-request/download/traffic.pcap"
+        "/tmp/premaster.txt": "nginx_events/event-5-https-request/download/premaster.txt"

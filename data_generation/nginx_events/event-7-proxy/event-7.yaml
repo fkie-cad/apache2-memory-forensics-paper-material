@@ -1,0 +1,51 @@
+include: "../base-image.yaml"
+
+
+event-proxy-pass-request:
+  container:
+    ports:
+      '8081/tcp': 8080
+      '443/tcp': 4444
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+        - "./gen_cert.sh"
+    - upload:
+        "nginx_events/event-7-proxy/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "nginx_events/event-7-proxy/nginx.conf": "/etc/nginx/nginx.conf"
+    - create_user:
+        username: "FKIE"
+        password: "successful"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - execute:
+        - "./proxied_server.sh 8000 /var/www/example.com/"
+    - start
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+        username: "FKIE"
+        password: "successful"
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+        username: "FKIE"
+        password: "unsuccessful"
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+        username: "FKIE"
+        password: "successful"
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+        username: "FKIE"
+        password: "unsucessful"
+    - execute:
+        - "./dump_memory.sh nginx /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/memory_dumps/": "nginx_events/event-7-proxy/download/dumps/"
+        "/var/log/nginx/": "nginx_events/event-7-proxy/download/logs/"
+        "/etc/nginx/nginx.conf": "nginx_events/event-7-proxy/download/nginx.conf"
+        "/tmp/traffic.pcap": "nginx_events/event-7-proxy/download/traffic.pcap"
+        "/tmp/premaster.txt": "nginx_events/event-7-proxy/download/premaster.txt"
+        "/tmp/proxied.log": "nginx_events/event-7-proxy/download/proxied.log"

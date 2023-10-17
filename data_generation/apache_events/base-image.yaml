@@ -1,0 +1,15 @@
+server: Apache
+uploads:
+  "gen_cert.sh": "/gen_cert.sh"
+  "dump_memory.sh": "/dump_memory.sh"
+  "sslkeylog.c": "/sslkeylog.c"
+  "proxied_server.sh": "/proxied_server.sh"
+execute:
+  - "chmod +x /dump_memory.sh"
+  - "chmod +x /gen_cert.sh"
+  - "chmod +x /proxied_server.sh"
+  - "cc sslkeylog.c -shared -o libsslkeylog.so -fPIC -ldl"
+base-image:
+  keep-image: yes                                             # default no
+  image-name: apache-server                                   # default None
+

@@ -1,0 +1,38 @@
+include: "../base-image.yaml"
+
+
+event-receive-https-request:
+  container:
+    ports:
+      '443/tcp': 4444
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+        - "./gen_cert.sh"
+    - upload:
+        "apache_events/event-5-https-request/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "apache_events/event-5-https-request/apache2.conf": "/etc/apache2/apache2.conf"
+        "apache_events/event-5-https-request/example.com.conf": "/etc/apache2/sites-available/example.com.conf"
+        "apache_events/event-5-https-request/ports.conf": "/etc/apache2/ports.conf"
+    - execute:
+        - "a2ensite example.com"
+        - "a2dissite 000-default"
+        - "a2enmod ssl"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - start
+    - request:
+        url: "https://localhost:4444/images/"
+        verify: False
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+    - execute:
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/traffic.pcap": "apache_events/event-5-https-request/download/traffic.pcap"
+        "/tmp/memory_dumps/": "apache_events/event-5-https-request/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-5-https-request/download/logs/"
+        "/etc/apache2/": "apache_events/event-5-https-request/download/apache2/"
+        "/tmp/premaster.txt": "apache_events/event-5-https-request/download/premaster.txt"

@@ -1,0 +1,43 @@
+include: "../base-image.yaml"
+
+
+event-start-web-server:
+  execute: no                                                 # default yes
+  image:
+    snapshot: no                                              # default no
+    image-name: apache2-server-start-web-server               # default None
+  container:
+    ports:                                                    # default None
+      '8081/tcp': 8080
+    keep-container-running: no                                # default no
+    container-name: apache2-server-start-web-server           # default None
+  actions:
+    - start
+    - execute:
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - download:
+        "/tmp/memory_dumps/": "apache_events/event-1-start-webserver/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-1-start-webserver/download/logs/"
+        "/etc/apache2/": "apache_events/event-1-start-webserver/download/apache2/"
+
+
+event-start-web-server-with-different-config:
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/"
+    - upload:
+        "apache_events/event-1-start-webserver/apache2.conf": "/etc/apache2/apache2.conf"
+        "apache_events/event-1-start-webserver/example.com.conf": "/etc/apache2/sites-available/example.com.conf"
+        "apache_events/event-1-start-webserver/ports.conf": "/etc/apache2/ports.conf"
+    - execute:
+        - "a2ensite example.com"
+        - "a2dissite 000-default"
+    - start
+    # If we take the dump right after starting the server we have 6 processes running instead of
+    # only 3, we might want to execute a Sleep command here to generate a more realistic event
+    - execute:
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - download:
+        "/tmp/memory_dumps/": "apache_events/event-1-start-webserver/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-1-start-webserver/download/logs/"
+        "/etc/apache2/": "apache_events/event-1-start-webserver/download/apache2/"

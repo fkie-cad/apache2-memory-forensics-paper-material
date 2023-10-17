@@ -1,0 +1,66 @@
+include: "../base-image.yaml"
+
+
+event-proxy-pass-request:
+  container:
+    ports:
+      '8081/tcp': 8080
+      '443/tcp': 4444
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+        - "mkdir -p /var/cache/apache2/mod_cache_disk/"
+        - "chown www-data.www-data /var/cache/apache2/mod_cache_disk"
+        - "chmod 755 /var/cache/apache2/mod_cache_disk"
+        - "./gen_cert.sh"
+    - upload:
+        "apache_events/event-8-proxy-cache/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "apache_events/event-8-proxy-cache/apache2.conf": "/etc/apache2/apache2.conf"
+        "apache_events/event-8-proxy-cache/example.com.conf": "/etc/apache2/sites-available/example.com.conf"
+        "apache_events/event-8-proxy-cache/ports.conf": "/etc/apache2/ports.conf"
+    - execute:
+        - "a2ensite example.com"
+        - "a2dissite 000-default"
+        - "a2enmod ssl"
+        - "a2enmod proxy"
+        - "a2enmod proxy_http"
+        - "a2enmod cache"
+        - "a2enmod cache_disk"
+        - "a2enmod expires"
+        - "a2enmod headers"
+    - create_user:
+        username: "FKIE"
+        password: "successful"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - execute:
+        - "./proxied_server.sh 8000 /var/www/example.com/"
+    - start
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+        username: "FKIE"
+        password: "successful"
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+        username: "FKIE"
+        password: "unsuccessful"
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+        username: "FKIE"
+        password: "successful"
+    - request:
+        url: "https://localhost:4444/images/cat-1.jpg"
+        verify: False
+        username: "FKIE"
+        password: "unsucessful"
+    - execute:
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/traffic.pcap": "apache_events/event-8-proxy-cache/download/traffic.pcap"
+        "/tmp/memory_dumps/": "apache_events/event-8-proxy-cache/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-8-proxy-cache/download/logs/"
+        "/etc/apache2/": "apache_events/event-8-proxy-cache/download/apache2/"
+        "/tmp/premaster.txt": "apache_events/event-8-proxy-cache/download/premaster.txt"
+        "/tmp/proxied.log": "apache_events/event-8-proxy-cache/download/proxied.log"

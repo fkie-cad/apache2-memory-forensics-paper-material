@@ -1,0 +1,21 @@
+include: "../base-image.yaml"
+
+
+event-remove-configuration-of-running-web-server:
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/"
+    - upload:
+        "apache_events/event-2-remove-config/apache2.conf": "/etc/apache2/apache2.conf"
+        "apache_events/event-2-remove-config/example.com.conf": "/etc/apache2/sites-available/example.com.conf"
+        "apache_events/event-2-remove-config/ports.conf": "/etc/apache2/ports.conf"
+    - execute:
+        - "a2ensite example.com"
+        - "a2dissite 000-default"
+    - start
+    - execute:
+        - "rm -rf /etc/apache2/"
+        - "./dump_memory.sh apache /tmp/memory_dumps/"
+    - download:
+        "/tmp/memory_dumps/": "apache_events/event-2-remove-config/download/dumps/"
+        "/var/log/apache2/": "apache_events/event-2-remove-config/download/logs/"

@@ -1,0 +1,28 @@
+include: "../base-image.yaml"
+
+
+event-receive-http-request:
+  container:
+    ports:
+      '8081/tcp': 8080
+  actions:
+    - execute:
+        - "mkdir -p /var/www/example.com/images/"
+    - upload:
+        "nginx_events/event-4-http-request/cat-1.jpg": "/var/www/example.com/images/cat-1.jpg"
+        "nginx_events/event-4-http-request/nginx.conf": "/etc/nginx/nginx.conf"
+    - start_network_capture:
+        name: "/tmp/traffic.pcap"
+    - start
+    - request:
+        url: "http://localhost:8080/images/"
+    - request:
+        url: "http://localhost:8080/images/cat-1.jpg"
+    - execute:
+        - "./dump_memory.sh nginx /tmp/memory_dumps/"
+    - stop_network_capture
+    - download:
+        "/tmp/traffic.pcap": "nginx_events/event-4-http-request/download/traffic.pcap"
+        "/tmp/memory_dumps/": "nginx_events/event-4-http-request/download/dumps/"
+        "/var/log/nginx/": "nginx_events/event-4-http-request/download/logs/"
+        "/etc/nginx/nginx.conf": "nginx_events/event-4-http-request/download/nginx.conf"

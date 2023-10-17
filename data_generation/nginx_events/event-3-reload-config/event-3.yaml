@@ -1,0 +1,18 @@
+include: "../base-image.yaml"
+
+
+event-reload-with-different-configuration:
+  actions:
+    - start
+    - execute:
+        - "rm -f /etc/nginx/nginx.conf"
+    - upload:
+        "nginx_events/event-3-reload-config/nginx.conf": "/etc/nginx/nginx.conf"
+    - reload
+    - execute:
+        - "sleep 5"
+        - "./dump_memory.sh nginx /tmp/memory_dumps/"
+    - download:
+        "/tmp/memory_dumps/": "nginx_events/event-3-reload-config/download/dumps/"
+        "/var/log/nginx/": "nginx_events/event-3-reload-config/download/logs/"
+        "/etc/nginx/nginx.conf": "nginx_events/event-3-reload-config/download/nginx.conf"
