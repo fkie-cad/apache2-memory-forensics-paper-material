@@ -1,4 +1,4 @@
-# Tutorial: How to Use The apache2 Volatility Plugin
+# How to Use The apache2 Volatility Plugin
 
 ## Step 1: Install Volatility
 
